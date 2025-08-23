@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       const text = await response.text();
-      processContent(text);
+      processContent(text, url);
       setStatus('Loaded');
     } catch (error) {
       setStatus(`Error: ${error.message}`);
@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-  function processContent(text) {
+  function processContent(text, currentUrl) {
     // Extract title
     let title = '';
     const titleMatch = text.match(/^# (.+)$/m);
@@ -129,6 +129,67 @@ document.addEventListener('DOMContentLoaded', () => {
       
       createCard(linkFront, linkBack);
     });
+
+    const stored = getStored(currentUrl);
+
+    const ratingFront = document.createElement('div');
+    ratingFront.innerHTML = `<h3>Rating</h3><p>${stored.rating ? `Your rating: ${stored.rating}/5` : 'No rating yet'}</p>`;
+    const ratingBack = document.createElement('div');
+    const stars = Array.from({ length: 5 }, (_, i) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = '★';
+      b.className = 'no-flip';
+      b.dataset.value = i + 1;
+      if (stored.rating && stored.rating >= i + 1) b.style.opacity = '1';
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const val = Number(b.dataset.value);
+        stored.rating = val;
+        setStored(currentUrl, stored);
+        ratingFront.querySelector('p').textContent = `Your rating: ${val}/5`;
+        stars.forEach((s, idx) => { s.style.opacity = idx < val ? '1' : '0.3'; });
+      });
+      return b;
+    });
+    const clearBtn = document.createElement('button');
+    clearBtn.type = 'button';
+    clearBtn.textContent = 'Clear';
+    clearBtn.className = 'no-flip';
+    clearBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      stored.rating = null;
+      setStored(currentUrl, stored);
+      ratingFront.querySelector('p').textContent = 'No rating yet';
+      stars.forEach(s => { s.style.opacity = '0.3'; });
+    });
+    ratingBack.appendChild(document.createElement('h3')).textContent = 'Rating';
+    stars.forEach(s => ratingBack.appendChild(s));
+    ratingBack.appendChild(clearBtn);
+    createCard(ratingFront, ratingBack);
+
+    const fbFront = document.createElement('div');
+    fbFront.innerHTML = `<h3>User Feedback</h3><p>${stored.feedback ? truncate(stored.feedback, 60) : 'No feedback yet'}</p>`;
+    const fbBack = document.createElement('div');
+    fbBack.appendChild(document.createElement('h3')).textContent = 'User Feedback';
+    const ta = document.createElement('textarea');
+    ta.className = 'no-flip';
+    ta.rows = 5;
+    ta.style.width = '100%';
+    ta.value = stored.feedback || '';
+    const saveBtn = document.createElement('button');
+    saveBtn.type = 'button';
+    saveBtn.textContent = 'Save';
+    saveBtn.className = 'no-flip';
+    saveBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      stored.feedback = ta.value.trim();
+      setStored(currentUrl, stored);
+      fbFront.querySelector('p').textContent = stored.feedback ? truncate(stored.feedback, 60) : 'No feedback yet';
+    });
+    fbBack.appendChild(ta);
+    fbBack.appendChild(saveBtn);
+    createCard(fbFront, fbBack);
   }
   
   function createCard(frontNode, backNode) {
@@ -150,6 +211,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     cardInner.appendChild(cardFront);
     cardInner.appendChild(cardBack);
+
+    ['click', 'keydown'].forEach(evt => {
+      cardBack.addEventListener(evt, (e) => {
+        e.stopPropagation();
+      });
+    });
     card.appendChild(cardInner);
     
     card.addEventListener('click', () => {
@@ -194,5 +261,23 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (e) {
       return url;
     }
+  }
+
+  function storageKey(u) {
+    return 'uf:' + u;
+  }
+
+  function getStored(u) {
+    try {
+      const raw = localStorage.getItem(storageKey(u));
+      if (raw) return JSON.parse(raw);
+    } catch (_) {}
+    return { rating: null, feedback: '' };
+  }
+
+  function setStored(u, data) {
+    try {
+      localStorage.setItem(storageKey(u), JSON.stringify(data));
+    } catch (_) {}
   }
 });
