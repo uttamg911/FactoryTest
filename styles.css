@@ -32,7 +32,8 @@ header p {
 }
 
 form {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
@@ -59,11 +60,14 @@ button {
   color: #fff;
   font-weight: 600;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
+  transition: opacity 0.2s, transform 0.1s, box-shadow 0.2s;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.25);
+  align-self: start;
 }
 
 button:hover {
   opacity: 0.9;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.35);
 }
 
 button:active {
@@ -97,6 +101,7 @@ small {
 .card {
   height: 200px;
   perspective: 1000px;
+  transition: transform 0.25s;
 }
 
 .card-inner {
@@ -106,6 +111,10 @@ small {
   text-align: left;
   transition: transform 0.6s;
   transform-style: preserve-3d;
+}
+
+.card:hover {
+  transform: translateY(-6px);
 }
 
 .card.is-flipped .card-inner {
@@ -118,7 +127,7 @@ small {
   height: 100%;
   backface-visibility: hidden;
   border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
   padding: 16px;
   box-sizing: border-box;
   overflow: auto;
@@ -145,6 +154,28 @@ small {
   font-size: 1.1rem;
   margin-top: 0;
   margin-bottom: 1rem;
+}
+
+/* wrap long text */
+.card pre {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* Pro / Con accent styling */
+.card-pro .card-face {
+  border-left: 4px solid #22c55e;
+}
+.card-con .card-face {
+  border-left: 4px solid #ef4444;
+}
+.card-pro .card-front h3,
+.card-pro .card-back h3 {
+  color: #22c55e;
+}
+.card-con .card-front h3,
+.card-con .card-back h3 {
+  color: #ef4444;
 }
 
 .card ul {
@@ -186,10 +217,10 @@ label[for="json-input"] {
 #json-input {
   display: block;
   width: 100%;
-  min-height: 260px;
+  min-height: 320px;
   border-radius: 8px;
   border: 1px solid var(--panel);
-  background-color: var(--panel);
+  background-color: rgba(17, 24, 39, 0.8);
   color: var(--text);
   padding: 12px;
   box-sizing: border-box;
@@ -197,9 +228,15 @@ label[for="json-input"] {
   white-space: pre;
   overflow: auto;
   margin-top: 0.5rem;
+  resize: vertical;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) inset;
 }
 
 #json-input:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+#json-input::placeholder {
+  color: var(--muted);
 }

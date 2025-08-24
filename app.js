@@ -23,19 +23,36 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       Object.entries(parsed).forEach(([key, value]) => {
-        const pretty = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
-        const preview = truncate(pretty.replace(/\s+/g, ' '), 80);
-
+        // Create front with only the key
         const front = document.createElement('div');
-        front.innerHTML = `<h3>${key}</h3><p>${preview}</p>`;
+        front.innerHTML = `<h3>${key}</h3>`;
 
+        // Create back with appropriate rendering based on value type
         const back = document.createElement('div');
-        const pre = document.createElement('pre');
-        pre.textContent = pretty;
         back.appendChild(document.createElement('h3')).textContent = key;
-        back.appendChild(pre);
+        
+        if (value === null || typeof value !== 'object') {
+          // For primitive values, use a paragraph
+          const p = document.createElement('p');
+          p.textContent = String(value);
+          back.appendChild(p);
+        } else {
+          // For objects/arrays, use pre-formatted text
+          const pre = document.createElement('pre');
+          pre.textContent = JSON.stringify(value, null, 2);
+          back.appendChild(pre);
+        }
 
-        createCard(front, back);
+        // Create the card and apply pro/con styling if applicable
+        const card = createCard(front, back);
+        
+        // Add pro/con styling based on key name
+        const lowerKey = key.toLowerCase();
+        if (lowerKey === 'pro' || lowerKey === 'pros') {
+          card.classList.add('card-pro');
+        } else if (lowerKey === 'con' || lowerKey === 'cons') {
+          card.classList.add('card-con');
+        }
       });
 
       setStatus('Loaded');
@@ -101,42 +118,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!str) return '';
     if (str.length <= maxLength) return str;
     return str.substring(0, maxLength - 3) + '...';
-  }
-  
-  function uniqueBy(arr, keyFn) {
-    const seen = new Set();
-    return arr.filter(item => {
-      const key = keyFn(item);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }
-  
-  function extractHostname(url) {
-    try {
-      const hostname = new URL(url).hostname;
-      return hostname.replace(/^www\./, '');
-    } catch (e) {
-      return url;
-    }
-  }
-
-  function storageKey(u) {
-    return 'uf:' + u;
-  }
-
-  function getStored(u) {
-    try {
-      const raw = localStorage.getItem(storageKey(u));
-      if (raw) return JSON.parse(raw);
-    } catch (_) {}
-    return { rating: null, feedback: '' };
-  }
-
-  function setStored(u, data) {
-    try {
-      localStorage.setItem(storageKey(u), JSON.stringify(data));
-    } catch (_) {}
   }
 });
