@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CURA AI - Your finance guardian</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <main>
+        <header>
+            <h1>CURA AI - Your finance guardian</h1>
+            <p>Paste a URL (like https://example.com) </p>
+        </header>
+        
+        <form id="url-form">
+            <input type="url" id="url-input" name="url" placeholder="https://example.com" required autocomplete="url">
+            <button id="fetch-button" type="submit">Generate Summary</button>
+        </form>
+        
+       <!--<small>Content is fetched via r.jina.ai proxy; some sites may not be accessible.</small>-->
+        
+        <div id="status" aria-live="polite"></div>  
+        <div id="cards" class="cards"></div>
+    </main>
+    
+    <script src="app.js" defer></script>
+</body>
+</html>
