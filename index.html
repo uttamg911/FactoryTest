@@ -3,24 +3,27 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CURA AI - Your finance guardian</title>
+    <title>CURA Financial Advisor</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <main>
         <header>
-            <h1>CURA AI - Your finance guardian</h1>
-            <p>Paste a URL (like https://example.com) </p>
+            <h1>CURA Financial Advisor</h1>
+            <p>Helps you make an informed financial decision.</p>
         </header>
         
         <form id="url-form">
-            <input type="url" id="url-input" name="url" placeholder="https://example.com" required autocomplete="url">
-            <button id="fetch-button" type="submit">Generate Summary</button>
+            <label for="json-input">Paste JSON</label>
+            <textarea id="json-input" name="json" placeholder='{
+  "title": "Example",
+  "description": "Lorem ipsum..."
+}' required></textarea>
+            <button id="fetch-button" type="submit">Generate Cards</button>
         </form>
         
-       <!--<small>Content is fetched via r.jina.ai proxy; some sites may not be accessible.</small>-->
+        <div id="status" aria-live="polite"></div>
         
-        <div id="status" aria-live="polite"></div>  
         <div id="cards" class="cards"></div>
     </main>
     

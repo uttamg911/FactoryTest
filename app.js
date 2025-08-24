@@ -1,135 +1,72 @@
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('url-form');
-  const urlInput = document.getElementById('url-input');
+  const jsonInput = document.getElementById('json-input');
   const statusEl = document.getElementById('status');
   const cardsContainer = document.getElementById('cards');
   const fetchButton = document.getElementById('fetch-button');
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
-    let url = urlInput.value.trim();
-    if (!url) return;
-    
-    // Normalize URL
-    if (!url.match(/^https?:\/\//i)) {
-      url = 'https://' + url;
-    }
-    
-    const proxyUrl = `https://r.jina.ai/${url}`;
-    
-    // Clear previous cards and update UI
+    const raw = jsonInput.value.trim();
+    if (!raw) return;
+
+    // Clear previous state
     cardsContainer.innerHTML = '';
     fetchButton.disabled = true;
     setStatus('Loading...');
-    
     try {
-      const response = await fetch(proxyUrl);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch content: ${response.status} ${response.statusText}`);
+      let parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        parsed = Object.fromEntries(parsed.map((v, i) => [String(i), v]));
+      } else if (parsed === null || typeof parsed !== 'object') {
+        parsed = { value: parsed };
       }
-      
-      const text = await response.text();
-      processContent(text);
+
+      Object.entries(parsed).forEach(([key, value]) => {
+        // Create front with only the key
+        const front = document.createElement('div');
+        front.innerHTML = `<h3>${key}</h3>`;
+
+        // Create back with appropriate rendering based on value type
+        const back = document.createElement('div');
+        back.appendChild(document.createElement('h3')).textContent = key;
+        
+        if (value === null || typeof value !== 'object') {
+          // For primitive values, use a paragraph
+          const p = document.createElement('p');
+          p.textContent = String(value);
+          back.appendChild(p);
+        } else {
+          // For objects/arrays, use pre-formatted text
+          const pre = document.createElement('pre');
+          pre.textContent = JSON.stringify(value, null, 2);
+          back.appendChild(pre);
+        }
+
+        // Create the card and apply pro/con styling if applicable
+        const card = createCard(front, back);
+        
+        // Add pro/con styling based on key name
+        const lowerKey = key.toLowerCase();
+        if (lowerKey === 'pro' || lowerKey === 'pros') {
+          card.classList.add('card-pro');
+        } else if (lowerKey === 'con' || lowerKey === 'cons') {
+          card.classList.add('card-con');
+        }
+      });
+
       setStatus('Loaded');
-    } catch (error) {
-      setStatus(`Error: ${error.message}`);
+    } catch (err) {
+      setStatus(`Error: ${err.message}`);
       const errorNode = document.createElement('div');
-      errorNode.innerHTML = `<h3>Error</h3><p>${error.message}</p>`;
-      
-      const errorBackNode = document.createElement('div');
-      errorBackNode.innerHTML = `<h3>Error Details</h3><p>Failed to fetch content from ${url}</p><p>Please check the URL and try again.</p>`;
-      
-      createCard(errorNode, errorBackNode);
+      errorNode.innerHTML = `<h3>Error</h3><p>${err.message}</p>`;
+      createCard(errorNode, errorNode.cloneNode(true));
     } finally {
       fetchButton.disabled = false;
     }
   });
   
-  function processContent(text) {
-    // Extract title
-    let title = '';
-    const titleMatch = text.match(/^# (.+)$/m);
-    if (titleMatch) {
-      title = titleMatch[1].trim();
-    } else {
-      title = truncate(text, 80);
-    }
-    
-    // Extract headings
-    const headings = [];
-    const headingRegex = /^(#{2,4}) (.+)$/gm;
-    let match;
-    while ((match = headingRegex.exec(text)) !== null && headings.length < 6) {
-      const heading = match[2].trim();
-      if (!headings.includes(heading)) {
-        headings.push(heading);
-      }
-    }
-    
-    // Extract paragraphs for summary
-    const paragraphs = text.split(/\n\s*\n/)
-      .map(p => p.trim())
-      .filter(p => p.length >= 80 && !p.startsWith('#'));
-    
-    const summary = paragraphs.slice(0, 2).join('\n\n');
-    
-    // Extract links
-    const links = [];
-    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    while ((match = linkRegex.exec(text)) !== null) {
-      const linkText = match[1].trim();
-      const linkUrl = match[2].trim();
-      
-      if (linkUrl.startsWith('http')) {
-        links.push({ text: linkText, url: linkUrl });
-      }
-    }
-    
-    const uniqueLinks = uniqueBy(links, link => link.url).slice(0, 6);
-    
-    // Create cards
-    if (title) {
-      const titleFront = document.createElement('div');
-      titleFront.innerHTML = `<h3>Title</h3><p>${truncate(title, 60)}</p>`;
-      
-      const titleBack = document.createElement('div');
-      titleBack.innerHTML = `<h3>Title</h3><p>${title}</p>`;
-      
-      createCard(titleFront, titleBack);
-    }
-    
-    if (summary) {
-      const summaryFront = document.createElement('div');
-      summaryFront.innerHTML = `<h3>Summary</h3><p>${truncate(summary, 80)}</p>`;
-      
-      const summaryBack = document.createElement('div');
-      summaryBack.innerHTML = `<h3>Summary</h3><p>${summary}</p>`;
-      
-      createCard(summaryFront, summaryBack);
-    }
-    
-    if (headings.length > 0) {
-      const headingsFront = document.createElement('div');
-      headingsFront.innerHTML = `<h3>Headings</h3><p>${headings.length} heading${headings.length > 1 ? 's' : ''} found</p>`;
-      
-      const headingsBack = document.createElement('div');
-      headingsBack.innerHTML = `<h3>Headings</h3><ul>${headings.map(h => `<li>${h}</li>`).join('')}</ul>`;
-      
-      createCard(headingsFront, headingsBack);
-    }
-    
-    uniqueLinks.forEach(link => {
-      const host = extractHostname(link.url);
-      const linkFront = document.createElement('div');
-      linkFront.innerHTML = `<h3>Link</h3><p>${truncate(link.text, 60)}</p><small>${host}</small>`;
-      
-      const linkBack = document.createElement('div');
-      linkBack.innerHTML = `<h3>Link</h3><p><a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.url}</a></p>`;
-      
-      createCard(linkFront, linkBack);
-    });
-  }
+  /* ===== helper functions ===== */
   
   function createCard(frontNode, backNode) {
     const card = document.createElement('div');
@@ -150,6 +87,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     cardInner.appendChild(cardFront);
     cardInner.appendChild(cardBack);
+
+    ['click', 'keydown'].forEach(evt => {
+      cardBack.addEventListener(evt, (e) => {
+        //e.stopPropagation();
+      });
+    });
     card.appendChild(cardInner);
     
     card.addEventListener('click', () => {
@@ -175,24 +118,5 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!str) return '';
     if (str.length <= maxLength) return str;
     return str.substring(0, maxLength - 3) + '...';
-  }
-  
-  function uniqueBy(arr, keyFn) {
-    const seen = new Set();
-    return arr.filter(item => {
-      const key = keyFn(item);
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-  }
-  
-  function extractHostname(url) {
-    try {
-      const hostname = new URL(url).hostname;
-      return hostname.replace(/^www\./, '');
-    } catch (e) {
-      return url;
-    }
   }
 });
