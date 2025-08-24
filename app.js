@@ -14,6 +14,105 @@ document.addEventListener('DOMContentLoaded', () => {
     cardsContainer.innerHTML = '';
     fetchButton.disabled = true;
     setStatus('Loading...');
+
+    try {
+      let parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        parsed = Object.fromEntries(parsed.map((v, i) => [String(i), v]));
+      } else if (parsed === null || typeof parsed !== 'object') {
+        parsed = { value: parsed };
+      }
+
+      // Build expandable list
+      const list = document.createElement('ul');
+      list.className = 'list';
+      cardsContainer.appendChild(list);
+
+      Object.entries(parsed).forEach(([key, value]) => {
+        const details = document.createElement('details');
+        if (key == "risks" || key == "details")
+          details.open = true;
+
+        details.className = 'list-item';
+
+        const summary = document.createElement('summary');
+        summary.textContent = key;
+        details.appendChild(summary);
+
+        const content = document.createElement('div');
+        content.className = 'list-content';
+
+        if (value === null || typeof value !== 'object') {
+          const p = document.createElement('p');
+          p.textContent = String(value);
+          content.appendChild(p);
+        } else {
+          // Render structured data with preserved newlines
+          const div = document.createElement('div');
+          div.textContent = JSON.stringify(value, null, 2);
+          content.appendChild(div);
+        }
+
+        const lowerKey = key.toLowerCase();
+        if (lowerKey === 'pro' || lowerKey === 'pros') {
+          details.classList.add('item-pro');
+        } else if (lowerKey === 'con' || lowerKey === 'cons') {
+          details.classList.add('item-con');
+        }
+
+        details.appendChild(content);
+        list.appendChild(details);
+      });
+
+      setStatus('Loaded');
+    } catch (err) {
+      setStatus(`Error: ${err.message}`);
+
+      const list = document.createElement('ul');
+      list.className = 'list';
+      cardsContainer.appendChild(list);
+
+      const details = document.createElement('details');
+      details.className = 'list-item item-con';
+
+      const summary = document.createElement('summary');
+      summary.textContent = 'Error';
+
+      const content = document.createElement('div');
+      content.className = 'list-content';
+      const p = document.createElement('p');
+      p.textContent = err.message;
+      content.appendChild(p);
+
+      details.appendChild(summary);
+      details.appendChild(content);
+      list.appendChild(details);
+    } finally {
+      fetchButton.disabled = false;
+    }
+  });
+
+  function setStatus(message) {
+    statusEl.textContent = message;
+  }
+});
+
+/*document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('url-form');
+  const jsonInput = document.getElementById('json-input');
+  const statusEl = document.getElementById('status');
+  const cardsContainer = document.getElementById('cards');
+  const fetchButton = document.getElementById('fetch-button');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const raw = jsonInput.value.trim();
+    if (!raw) return;
+
+    // Clear previous state
+    cardsContainer.innerHTML = '';
+    fetchButton.disabled = true;
+    setStatus('Loading...');
     try {
       let parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) {
@@ -66,7 +165,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-  /* ===== helper functions ===== */
+  //===== helper functions ===== 
   
   function createCard(frontNode, backNode) {
     const card = document.createElement('div');
@@ -119,4 +218,4 @@ document.addEventListener('DOMContentLoaded', () => {
     if (str.length <= maxLength) return str;
     return str.substring(0, maxLength - 3) + '...';
   }
-});
+});*/

@@ -244,3 +244,39 @@ label[for="json-input"] {
 #json-input::placeholder {
   color: var(--muted);
 }
+
+/* Expandable list */
+.list {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+}
+
+.list-item {
+  background: var(--panel);
+  border-radius: 12px;
+  margin: 8px 0;
+  border-left: 4px solid transparent;
+  box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+}
+
+.list-item summary {
+  cursor: pointer;
+  padding: 14px 16px;
+  font-weight: 600;
+  color: var(--text);
+  outline: none;
+}
+
+.list-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.list-content {
+  padding: 0 16px 16px;
+  white-space: pre-line; /* preserve newlines in expanded text */
+}
+
+/* Pro / Con accent styling for list */
+.item-pro { border-left-color: #22c55e; }
+.item-con { border-left-color: #ef4444; }
