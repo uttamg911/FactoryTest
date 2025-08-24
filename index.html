@@ -9,23 +9,22 @@
 <body>
     <main>
         <header>
-            <h1>URL Flip Cards</h1>
-            <p>Paste a URL (like https://example.com) to generate flip cards with information from the website.</p>
+            <h1>JSON Flip Cards</h1>
+            <p>Paste JSON below and press the button to generate flip cards where keys become titles and values become content.</p>
         </header>
         
         <form id="url-form">
-            <input type="url" id="url-input" name="url" placeholder="https://example.com" required autocomplete="url">
+            <label for="json-input">Paste JSON</label>
+            <textarea id="json-input" name="json" placeholder='{
+  "title": "Example",
+  "description": "Lorem ipsum..."
+}' required></textarea>
             <button id="fetch-button" type="submit">Generate Cards</button>
         </form>
-        
-        <small>Requests are sent to http://localhost:8000/analyze-financial-product; ensure your API is running. Some browsers require proper CORS headers.</small>
         
         <div id="status" aria-live="polite"></div>
         
         <div id="cards" class="cards"></div>
-
-        <label for="json-output">Raw JSON response</label>
-        <textarea id="json-output" readonly placeholder="The API response will appear here"></textarea>
     </main>
     
     <script src="app.js" defer></script>

@@ -175,15 +175,15 @@ small {
   }
 }
 
-/* JSON output textarea and label */
+/* JSON input textarea and label */
 
-label[for="json-output"] {
+label[for="json-input"] {
   display: block;
   margin-top: 1.25rem;
   color: var(--muted);
 }
 
-#json-output {
+#json-input {
   display: block;
   width: 100%;
   min-height: 260px;
@@ -199,7 +199,7 @@ label[for="json-output"] {
   margin-top: 0.5rem;
 }
 
-#json-output:focus {
+#json-input:focus {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
