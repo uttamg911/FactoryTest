@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const statusEl = document.getElementById('status');
   const cardsContainer = document.getElementById('cards');
   const fetchButton = document.getElementById('fetch-button');
+  const jsonOut = document.getElementById('json-output');
 
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -16,24 +17,42 @@ document.addEventListener('DOMContentLoaded', () => {
       url = 'https://' + url;
     }
     
-    const proxyUrl = `https://r.jina.ai/${url}`;
-    
     // Clear previous cards and update UI
     cardsContainer.innerHTML = '';
     fetchButton.disabled = true;
     setStatus('Loading...');
+    jsonOut.value = '';
     
     try {
-      const response = await fetch(proxyUrl);
+      const response = await fetch('http://localhost:8000/analyze-financial-product', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          source: url,
+          source_type: 'url'
+        })
+      });
+      
       if (!response.ok) {
         throw new Error(`Failed to fetch content: ${response.status} ${response.statusText}`);
       }
       
-      const text = await response.text();
-      processContent(text, url);
+      try {
+        const data = await response.json();
+        jsonOut.value = JSON.stringify(data, null, 2);
+      } catch (jsonError) {
+        const text = await response.text();
+        jsonOut.value = text;
+      }
+      
+      renderUserCards(url);
       setStatus('Loaded');
     } catch (error) {
       setStatus(`Error: ${error.message}`);
+      jsonOut.value = error.message;
+      
       const errorNode = document.createElement('div');
       errorNode.innerHTML = `<h3>Error</h3><p>${error.message}</p>`;
       
@@ -46,90 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   
-  function processContent(text, currentUrl) {
-    // Extract title
-    let title = '';
-    const titleMatch = text.match(/^# (.+)$/m);
-    if (titleMatch) {
-      title = titleMatch[1].trim();
-    } else {
-      title = truncate(text, 80);
-    }
-    
-    // Extract headings
-    const headings = [];
-    const headingRegex = /^(#{2,4}) (.+)$/gm;
-    let match;
-    while ((match = headingRegex.exec(text)) !== null && headings.length < 6) {
-      const heading = match[2].trim();
-      if (!headings.includes(heading)) {
-        headings.push(heading);
-      }
-    }
-    
-    // Extract paragraphs for summary
-    const paragraphs = text.split(/\n\s*\n/)
-      .map(p => p.trim())
-      .filter(p => p.length >= 80 && !p.startsWith('#'));
-    
-    const summary = paragraphs.slice(0, 2).join('\n\n');
-    
-    // Extract links
-    const links = [];
-    const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
-    while ((match = linkRegex.exec(text)) !== null) {
-      const linkText = match[1].trim();
-      const linkUrl = match[2].trim();
-      
-      if (linkUrl.startsWith('http')) {
-        links.push({ text: linkText, url: linkUrl });
-      }
-    }
-    
-    const uniqueLinks = uniqueBy(links, link => link.url).slice(0, 6);
-    
-    // Create cards
-    if (title) {
-      const titleFront = document.createElement('div');
-      titleFront.innerHTML = `<h3>Title</h3><p>${truncate(title, 60)}</p>`;
-      
-      const titleBack = document.createElement('div');
-      titleBack.innerHTML = `<h3>Title</h3><p>${title}</p>`;
-      
-      createCard(titleFront, titleBack);
-    }
-    
-    if (summary) {
-      const summaryFront = document.createElement('div');
-      summaryFront.innerHTML = `<h3>Summary</h3><p>${truncate(summary, 80)}</p>`;
-      
-      const summaryBack = document.createElement('div');
-      summaryBack.innerHTML = `<h3>Summary</h3><p>${summary}</p>`;
-      
-      createCard(summaryFront, summaryBack);
-    }
-    
-    if (headings.length > 0) {
-      const headingsFront = document.createElement('div');
-      headingsFront.innerHTML = `<h3>Headings</h3><p>${headings.length} heading${headings.length > 1 ? 's' : ''} found</p>`;
-      
-      const headingsBack = document.createElement('div');
-      headingsBack.innerHTML = `<h3>Headings</h3><ul>${headings.map(h => `<li>${h}</li>`).join('')}</ul>`;
-      
-      createCard(headingsFront, headingsBack);
-    }
-    
-    uniqueLinks.forEach(link => {
-      const host = extractHostname(link.url);
-      const linkFront = document.createElement('div');
-      linkFront.innerHTML = `<h3>Link</h3><p>${truncate(link.text, 60)}</p><small>${host}</small>`;
-      
-      const linkBack = document.createElement('div');
-      linkBack.innerHTML = `<h3>Link</h3><p><a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.url}</a></p>`;
-      
-      createCard(linkFront, linkBack);
-    });
-
+  function renderUserCards(currentUrl) {
     const stored = getStored(currentUrl);
 
     const ratingFront = document.createElement('div');

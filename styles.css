@@ -174,3 +174,32 @@ small {
     grid-template-columns: 1fr;
   }
 }
+
+/* JSON output textarea and label */
+
+label[for="json-output"] {
+  display: block;
+  margin-top: 1.25rem;
+  color: var(--muted);
+}
+
+#json-output {
+  display: block;
+  width: 100%;
+  min-height: 260px;
+  border-radius: 8px;
+  border: 1px solid var(--panel);
+  background-color: var(--panel);
+  color: var(--text);
+  padding: 12px;
+  box-sizing: border-box;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  white-space: pre;
+  overflow: auto;
+  margin-top: 0.5rem;
+}
+
+#json-output:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
